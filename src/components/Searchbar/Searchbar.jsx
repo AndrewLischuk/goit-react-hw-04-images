@@ -1,7 +1,9 @@
 import { Component } from 'react';
+import PropTypes from 'prop-types';
 
 class Searchbar extends Component {
   state = {
+    page: 1,
     searchRequest: '',
   };
 
@@ -12,8 +14,8 @@ class Searchbar extends Component {
 
   handlerFormSubmit = e => {
     e.preventDefault();
-    this.props.handlerSearchRequest(this.state.searchRequest);
-    this.setState({ searchRequest: '' });
+    this.props.handlerSearchRequest(this.state.searchRequest, this.state.page);
+    this.setState({ page: 1, searchRequest: '' });
   };
 
   render() {
@@ -40,3 +42,5 @@ class Searchbar extends Component {
 }
 
 export default Searchbar;
+
+Searchbar.propTypes = { handlerSearchRequest: PropTypes.func };
