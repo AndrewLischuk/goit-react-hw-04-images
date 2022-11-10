@@ -2,6 +2,9 @@ import { Component } from 'react';
 import ImageGallery from './ImageGallery/ImageGallery';
 import Modal from './Modal/Modal';
 import Searchbar from './Searchbar/Searchbar';
+import { Audio } from 'react-loader-spinner';
+import imageAPI from './services/pixabayAPI';
+import { Button } from './Button/Button';
 
 export default class App extends Component {
   state = {
@@ -9,7 +12,27 @@ export default class App extends Component {
     page: 1,
     showModal: false,
     largeImageURL: '',
+    hits: [],
+    error: null,
+    status: 'idle',
   };
+
+  componentDidUpdate(_, prevState) {
+    const prevReq = prevState.searchRequest;
+    const nextReq = this.state.searchRequest;
+    const prevPage = prevState.page;
+    const nextPage = this.state.page;
+
+    if (prevReq !== nextReq || prevPage !== nextPage) {
+      this.setState({ status: 'pending' });
+
+      imageAPI
+        .fetchImage(this.state.searchRequest, this.state.page)
+        .then(data => this.setState({ hits: data.hits, status: 'resolved' }))
+        .catch(error => this.setState({ error, status: 'rejected' }));
+      // .finally(() => this.setState({ loading: false }));
+    }
+  }
 
   handlerSearchRequest = (searchRequest, page) => {
     this.setState({ searchRequest, page });
@@ -36,21 +59,29 @@ export default class App extends Component {
   };
 
   render() {
-    const { showModal, searchRequest, largeImageURL, page } = this.state;
-    return (
-      <div className="App">
-        {showModal && (
-          <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
-        )}
+    const { hits, showModal, searchRequest, largeImageURL, page, status } =
+      this.state;
+    if (status === 'idle') {
+      return <p>Enter your search request</p>;
+    }
+    if (status === 'pending') {
+      return <Audio />;
+    }
+    if (status === 'resolved') {
+      return <ImageGallery hits={hits} openModal={this.openModal} />;
+    }
 
-        <Searchbar handlerSearchRequest={this.handlerSearchRequest} />
-        <ImageGallery
-          searchRequest={searchRequest}
-          openModal={this.openModal}
-          page={page}
-          handlerPage={this.handlerPage}
-        />
-      </div>
-    );
+    //   return (
+    //     <div className="App">
+    //       {showModal && (
+    //         <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
+    //       )}
+
+    //       <Searchbar handlerSearchRequest={this.handlerSearchRequest} />
+
+    //       <ImageGallery hits={hits} openModal={this.openModal} />
+    //       {hits.length !== 0 && <Button handlerPage={this.handlerPage} />}
+    //     </div>
+    //   );
   }
 }
