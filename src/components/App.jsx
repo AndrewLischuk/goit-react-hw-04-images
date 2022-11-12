@@ -15,6 +15,7 @@ export default class App extends Component {
     hits: [],
     error: null,
     status: 'idle',
+    hitsLength: 1,
   };
 
   componentDidUpdate(_, prevState) {
@@ -30,12 +31,17 @@ export default class App extends Component {
         .fetchImage(this.state.searchRequest, this.state.page)
         .then(data => {
           if (prevReq !== nextReq) {
-            return this.setState({ hits: data.hits, status: 'resolved' });
+            return this.setState({
+              hits: data.hits,
+              status: 'resolved',
+              hitsLength: data.hits.length,
+            });
           }
           if (prevPage !== nextPage) {
             this.setState(prevState => ({
               hits: [...prevState.hits, ...data.hits],
               status: 'resolved',
+              hitsLength: data.hits.length,
             }));
           }
         })
@@ -69,27 +75,40 @@ export default class App extends Component {
   };
 
   render() {
-    const { hits, showModal, searchRequest, largeImageURL, page, status } =
-      this.state;
+    const {
+      hits,
+      showModal,
+      hitsLength,
+      largeImageURL,
+      error,
+      status,
+      searchRequest,
+    } = this.state;
     return (
       <div className="App">
         <Searchbar handlerSearchRequest={this.handlerSearchRequest} />
-
-        {status === 'idle' && <p>Enter your search request</p>}
 
         {showModal && (
           <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
         )}
 
-        {status === 'pending' && <Audio />}
+        <div className="Gallery">
+          {status === 'idle' && <p>Enter your search request</p>}
 
-        {status === 'resolved' && (
-          <ImageGallery hits={hits} openModal={this.openModal} />
-        )}
+          {hitsLength === 0 && (
+            <p>No images on "{searchRequest}", try another one</p>
+          )}
 
-        {status === 'error' && <div>There an error has occured</div>}
+          {status === 'pending' && <Audio />}
 
-        <Button handlerPage={this.handlerPage} />
+          {status === 'resolved' && (
+            <ImageGallery hits={hits} openModal={this.openModal} />
+          )}
+
+          {status === 'error' && <div>{error}</div>}
+
+          {hitsLength >= 12 && <Button handlerPage={this.handlerPage} />}
+        </div>
       </div>
     );
   }

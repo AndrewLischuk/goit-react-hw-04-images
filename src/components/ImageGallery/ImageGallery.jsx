@@ -30,8 +30,6 @@ class ImageGallery extends Component {
 export default ImageGallery;
 
 ImageGallery.propTypes = {
-  handlerPage: PropTypes.func,
+  hits: PropTypes.array,
   openModal: PropTypes.func,
-  page: PropTypes.number.isRequired,
-  searchRequest: PropTypes.string.isRequired,
 };
