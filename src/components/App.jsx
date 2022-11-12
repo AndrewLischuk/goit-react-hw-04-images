@@ -28,9 +28,19 @@ export default class App extends Component {
 
       imageAPI
         .fetchImage(this.state.searchRequest, this.state.page)
-        .then(data => this.setState({ hits: data.hits, status: 'resolved' }))
+        .then(data => {
+          if (prevReq !== nextReq) {
+            return this.setState({ hits: data.hits, status: 'resolved' });
+          }
+          if (prevPage !== nextPage) {
+            this.setState(prevState => ({
+              hits: [...prevState.hits, ...data.hits],
+              status: 'resolved',
+            }));
+          }
+        })
         .catch(error => this.setState({ error, status: 'rejected' }));
-      // .finally(() => this.setState({ loading: false }));
+      // .finally(() => this.setState({ status: 'idle' }));
     }
   }
 
@@ -45,43 +55,42 @@ export default class App extends Component {
   };
 
   openModal = largeImageURL => {
-    this.setState(({ showModal }) => ({
+    this.setState({
       showModal: true,
       largeImageURL: largeImageURL,
-    }));
+    });
   };
 
   closeModal = () => {
-    this.setState(({ showModal }) => ({
+    this.setState({
       showModal: false,
       largeImageURL: '',
-    }));
+    });
   };
 
   render() {
     const { hits, showModal, searchRequest, largeImageURL, page, status } =
       this.state;
-    if (status === 'idle') {
-      return <p>Enter your search request</p>;
-    }
-    if (status === 'pending') {
-      return <Audio />;
-    }
-    if (status === 'resolved') {
-      return <ImageGallery hits={hits} openModal={this.openModal} />;
-    }
+    return (
+      <div className="App">
+        <Searchbar handlerSearchRequest={this.handlerSearchRequest} />
 
-    //   return (
-    //     <div className="App">
-    //       {showModal && (
-    //         <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
-    //       )}
+        {status === 'idle' && <p>Enter your search request</p>}
 
-    //       <Searchbar handlerSearchRequest={this.handlerSearchRequest} />
+        {showModal && (
+          <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
+        )}
 
-    //       <ImageGallery hits={hits} openModal={this.openModal} />
-    //       {hits.length !== 0 && <Button handlerPage={this.handlerPage} />}
-    //     </div>
-    //   );
+        {status === 'pending' && <Audio />}
+
+        {status === 'resolved' && (
+          <ImageGallery hits={hits} openModal={this.openModal} />
+        )}
+
+        {status === 'error' && <div>There an error has occured</div>}
+
+        <Button handlerPage={this.handlerPage} />
+      </div>
+    );
   }
 }
