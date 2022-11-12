@@ -46,7 +46,6 @@ export default class App extends Component {
           }
         })
         .catch(error => this.setState({ error, status: 'rejected' }));
-      // .finally(() => this.setState({ status: 'idle' }));
     }
   }
 
@@ -99,7 +98,17 @@ export default class App extends Component {
             <p>No images on "{searchRequest}", try another one</p>
           )}
 
-          {status === 'pending' && <Audio />}
+          {status === 'pending' && (
+            <Audio
+              height="80"
+              width="80"
+              radius="9"
+              color="green"
+              ariaLabel="loading"
+              wrapperStyle
+              wrapperClassName
+            />
+          )}
 
           {status === 'resolved' && (
             <ImageGallery hits={hits} openModal={this.openModal} />
