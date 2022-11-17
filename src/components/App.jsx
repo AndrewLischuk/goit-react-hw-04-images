@@ -44,7 +44,7 @@ export const App = () => {
         setError(error);
         setStatus('rejected');
       });
-  }, [searchRequest, page]);
+  }, [searchRequest, page, prevSearchReq, prevPage]);
 
   const handlerSearchRequest = (searchRequest, page) => {
     setSearchRequest(searchRequest);
