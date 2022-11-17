@@ -1,124 +1,104 @@
-import { Component } from 'react';
 import ImageGallery from './ImageGallery/ImageGallery';
-import Modal from './Modal/Modal';
+import { Modal } from './Modal/Modal';
 import Searchbar from './Searchbar/Searchbar';
 import { Audio } from 'react-loader-spinner';
 import imageAPI from './services/pixabayAPI';
 import { Button } from './Button/Button';
+import { useState, useEffect } from 'react';
+import { usePrevious } from 'react-use';
 
-export default class App extends Component {
-  state = {
-    searchRequest: '',
-    page: 1,
-    showModal: false,
-    largeImageURL: '',
-    hits: [],
-    error: null,
-    status: 'idle',
-    hitsLength: 1,
-  };
+export const App = () => {
+  const [searchRequest, setSearchRequest] = useState('');
+  const [page, setPage] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+  const [largeImageURL, setLargeImageURL] = useState('');
+  const [hits, setHits] = useState([]);
+  const [error, setError] = useState(null);
+  const [status, setStatus] = useState('idle');
+  const [hitsLength, setHitsLength] = useState(1);
 
-  componentDidUpdate(_, prevState) {
-    const prevReq = prevState.searchRequest;
-    const nextReq = this.state.searchRequest;
-    const prevPage = prevState.page;
-    const nextPage = this.state.page;
+  const prevSearchReq = usePrevious(searchRequest);
+  const prevPage = usePrevious(page);
 
-    if (prevReq !== nextReq || prevPage !== nextPage) {
-      this.setState({ status: 'pending' });
-
-      imageAPI
-        .fetchImage(this.state.searchRequest, this.state.page)
-        .then(data => {
-          if (prevReq !== nextReq) {
-            return this.setState({
-              hits: data.hits,
-              status: 'resolved',
-              hitsLength: data.hits.length,
-            });
-          }
-          if (prevPage !== nextPage) {
-            this.setState(prevState => ({
-              hits: [...prevState.hits, ...data.hits],
-              status: 'resolved',
-              hitsLength: data.hits.length,
-            }));
-          }
-        })
-        .catch(error => this.setState({ error, status: 'rejected' }));
+  useEffect(() => {
+    if (!searchRequest) {
+      return;
     }
-  }
+    setStatus('pending');
 
-  handlerSearchRequest = (searchRequest, page) => {
-    this.setState({ searchRequest, page });
+    imageAPI
+      .fetchImage(searchRequest, page)
+      .then(data => {
+        if (prevSearchReq !== searchRequest) {
+          setHits(data.hits);
+          setStatus('resolved');
+          setHitsLength(data.hits.length);
+        }
+        if (prevPage !== page) {
+          setHits(prev => [...prev, ...data.hits]);
+          setStatus('resolved');
+          setHitsLength(data.hits.length);
+        }
+      })
+      .catch(error => {
+        setError(error);
+        setStatus('rejected');
+      });
+  }, [searchRequest, page]);
+
+  const handlerSearchRequest = (searchRequest, page) => {
+    setSearchRequest(searchRequest);
+    setPage(page);
   };
 
-  handlerPage = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handlerPage = () => {
+    setPage(prev => prev + 1);
   };
 
-  openModal = largeImageURL => {
-    this.setState({
-      showModal: true,
-      largeImageURL: largeImageURL,
-    });
+  const openModal = largeImageURL => {
+    setShowModal(true);
+    setLargeImageURL(largeImageURL);
   };
 
-  closeModal = () => {
-    this.setState({
-      showModal: false,
-      largeImageURL: '',
-    });
+  const closeModal = () => {
+    setShowModal(false);
+    setLargeImageURL('');
   };
+  return (
+    <div className="App">
+      <Searchbar handlerSearchRequest={handlerSearchRequest} />
 
-  render() {
-    const {
-      hits,
-      showModal,
-      hitsLength,
-      largeImageURL,
-      error,
-      status,
-      searchRequest,
-    } = this.state;
-    return (
-      <div className="App">
-        <Searchbar handlerSearchRequest={this.handlerSearchRequest} />
+      {showModal && (
+        <Modal largeImageURL={largeImageURL} closeModal={closeModal} />
+      )}
 
-        {showModal && (
-          <Modal largeImageURL={largeImageURL} closeModal={this.closeModal} />
+      <div className="Gallery">
+        {status === 'idle' && <p>Enter your search request</p>}
+
+        {hitsLength === 0 && (
+          <p>No images on "{searchRequest}", try another one</p>
         )}
 
-        <div className="Gallery">
-          {status === 'idle' && <p>Enter your search request</p>}
+        {status === 'pending' && (
+          <Audio
+            height="80"
+            width="80"
+            radius="9"
+            color="green"
+            ariaLabel="loading"
+            wrapperStyle
+            wrapperClassName
+          />
+        )}
 
-          {hitsLength === 0 && (
-            <p>No images on "{searchRequest}", try another one</p>
-          )}
+        {status === 'resolved' && (
+          <ImageGallery hits={hits} openModal={openModal} />
+        )}
 
-          {status === 'pending' && (
-            <Audio
-              height="80"
-              width="80"
-              radius="9"
-              color="green"
-              ariaLabel="loading"
-              wrapperStyle
-              wrapperClassName
-            />
-          )}
+        {status === 'error' && <div>{error}</div>}
 
-          {status === 'resolved' && (
-            <ImageGallery hits={hits} openModal={this.openModal} />
-          )}
-
-          {status === 'error' && <div>{error}</div>}
-
-          {hitsLength >= 12 && <Button handlerPage={this.handlerPage} />}
-        </div>
+        {hitsLength >= 12 && <Button handlerPage={handlerPage} />}
       </div>
-    );
-  }
-}
+    </div>
+  );
+};
