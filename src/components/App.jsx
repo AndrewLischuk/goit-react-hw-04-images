@@ -5,7 +5,6 @@ import { Audio } from 'react-loader-spinner';
 import imageAPI from './services/pixabayAPI';
 import { Button } from './Button/Button';
 import { useState, useEffect } from 'react';
-import { usePrevious } from 'react-use';
 
 export const App = () => {
   const [searchRequest, setSearchRequest] = useState('');
@@ -17,9 +16,6 @@ export const App = () => {
   const [status, setStatus] = useState('idle');
   const [hitsLength, setHitsLength] = useState(1);
 
-  const prevSearchReq = usePrevious(searchRequest);
-  const prevPage = usePrevious(page);
-
   useEffect(() => {
     if (!searchRequest) {
       return;
@@ -28,20 +24,11 @@ export const App = () => {
 
     imageAPI
       .fetchImage(searchRequest, page)
-      .then(
-        data => {
-          // if (prevSearchReq !== searchRequest) {
-          //   setHits(data.hits);
-          //   setStatus('resolved');
-          //   setHitsLength(data.hits.length);
-          // }
-          // if (prevPage !== page) {
-          setHits(prev => [...prev, ...data.hits]);
-          setStatus('resolved');
-          setHitsLength(data.hits.length);
-        }
-        // }
-      )
+      .then(data => {
+        setHits(prev => [...prev, ...data.hits]);
+        setStatus('resolved');
+        setHitsLength(data.hits.length);
+      })
       .catch(error => {
         setError(error);
         setStatus('rejected');
