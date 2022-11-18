@@ -28,27 +28,30 @@ export const App = () => {
 
     imageAPI
       .fetchImage(searchRequest, page)
-      .then(data => {
-        if (prevSearchReq !== searchRequest) {
-          setHits(data.hits);
-          setStatus('resolved');
-          setHitsLength(data.hits.length);
-        }
-        if (prevPage !== page) {
+      .then(
+        data => {
+          // if (prevSearchReq !== searchRequest) {
+          //   setHits(data.hits);
+          //   setStatus('resolved');
+          //   setHitsLength(data.hits.length);
+          // }
+          // if (prevPage !== page) {
           setHits(prev => [...prev, ...data.hits]);
           setStatus('resolved');
           setHitsLength(data.hits.length);
         }
-      })
+        // }
+      )
       .catch(error => {
         setError(error);
         setStatus('rejected');
       });
-  }, [searchRequest, page, prevSearchReq, prevPage]);
+  }, [searchRequest, page]);
 
   const handlerSearchRequest = (searchRequest, page) => {
     setSearchRequest(searchRequest);
     setPage(page);
+    setHits([]);
   };
 
   const handlerPage = () => {
